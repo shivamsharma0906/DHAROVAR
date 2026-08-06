@@ -1,6 +1,8 @@
 backend:
-  name: git-gateway
+  name: github
+  repo: shivamsharma0906/DHAROVAR
   branch: main
+  auth_endpoint: api/auth
 
 # Local backend support for testing without live Git Gateway
 local_backend: true
