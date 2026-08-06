@@ -89,8 +89,13 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
   const handleImageFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const imageUrl = URL.createObjectURL(file);
-      setFormCoverImage(imageUrl);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setFormCoverImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 

@@ -56,19 +56,32 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
-      setFormCoverImage(url);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        if (typeof reader.result === 'string') {
+          setFormCoverImage(reader.result);
+        }
+      };
+      reader.readAsDataURL(file);
     }
   };
 
   const handleGalleryUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (files && files.length > 0) {
-      const newPhotos: string[] = [];
-      for (let i = 0; i < files.length; i++) {
-        newPhotos.push(URL.createObjectURL(files[i]));
-      }
-      setFormGallery([...formGallery, ...newPhotos]);
+      const loadPromises = Array.from(files).map((file) => {
+        return new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            resolve(reader.result as string);
+          };
+          reader.readAsDataURL(file);
+        });
+      });
+
+      Promise.all(loadPromises).then((base64Images) => {
+        setFormGallery([...formGallery, ...base64Images]);
+      });
     }
   };
 
