@@ -2,7 +2,7 @@
   "cleanUrls": true,
   "rewrites": [
     {
-      "source": "/((?!assets|uploads|images|admin).*)",
+      "source": "/((?!assets|uploads|images).*)",
       "destination": "/index.html"
     }
   ]
