@@ -428,8 +428,8 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
 
               {/* Cover Image if no video player */}
               {!selectedPub.video_file && selectedPub.cover_image && (
-                <div className="mb-8 rounded-xl overflow-hidden border border-[#E8E2D8] max-h-80 bg-[#FAF8F5]">
-                  <img src={selectedPub.cover_image} alt={selectedPub.title} className="w-full h-full object-contain" />
+                <div className="mb-8 rounded-xl overflow-hidden border border-[#E8E2D8] bg-[#FAF8F5] flex justify-center">
+                  <img src={selectedPub.cover_image} alt={selectedPub.title} className="w-full h-auto max-h-[450px] object-contain block" />
                 </div>
               )}
 
@@ -525,16 +525,23 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
                 {/* Local Cover Image Selection */}
                 <div>
                   <label className="block font-bold uppercase tracking-wider mb-1">Cover Image (Upload from Computer)</label>
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E8E2D8] rounded-xl cursor-pointer hover:border-[#C8A35F] transition-colors">
+                  <div className="flex items-start gap-4">
+                    <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E8E2D8] rounded-xl cursor-pointer hover:border-[#C8A35F] transition-colors">
                       <Upload size={14} className="text-[#C8A35F]" />
                       <span>Choose Local Image</span>
                       <input type="file" accept="image/*" onChange={handleImageFileUpload} className="hidden" />
                     </label>
-                    {formCoverImage && (
-                      <span className="text-[11px] text-[#1A535C]/70 truncate max-w-[200px]">
-                        Selected
-                      </span>
+                    {formCoverImage && formCoverImage !== '/images/logo.png' && (
+                      <div className="relative w-20 h-20 rounded-xl overflow-hidden border border-[#E8E2D8] bg-white shadow-sm">
+                        <img src={formCoverImage} alt="Cover Preview" className="w-full h-full object-contain" />
+                        <button
+                          type="button"
+                          onClick={() => setFormCoverImage('/images/logo.png')}
+                          className="absolute -top-1.5 -right-1.5 p-1 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
@@ -542,16 +549,25 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
                 {/* Local HTML5 Video Selection (.mp4) */}
                 <div>
                   <label className="block font-bold uppercase tracking-wider mb-1">Upload Video (.mp4 / .webm)</label>
-                  <div className="flex items-center gap-3">
-                    <label className="flex items-center gap-2 px-4 py-2 bg-white border border-[#E8E2D8] rounded-xl cursor-pointer hover:border-[#C8A35F] transition-colors">
+                  <div className="flex items-center gap-4">
+                    <label className="flex items-center gap-2 px-4 py-2.5 bg-white border border-[#E8E2D8] rounded-xl cursor-pointer hover:border-[#C8A35F] transition-colors">
                       <Video size={14} className="text-[#C8A35F]" />
                       <span>Choose Video File</span>
                       <input type="file" accept="video/mp4,video/webm" onChange={handleVideoFileUpload} className="hidden" />
                     </label>
                     {formVideoFile && (
-                      <span className="text-[11px] text-[#1A535C]/70 truncate max-w-[200px]">
-                        Video Attached
-                      </span>
+                      <div className="flex items-center gap-2 bg-[#FAF8F5] border border-[#E8E2D8] px-3 py-1.5 rounded-xl">
+                        <span className="text-[11px] text-[#1A535C]/70 font-semibold truncate max-w-[120px]">
+                          Video Attached
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => setFormVideoFile(undefined)}
+                          className="p-0.5 bg-red-600 text-white rounded-full hover:bg-red-700 transition-colors shadow"
+                        >
+                          <X size={10} />
+                        </button>
+                      </div>
                     )}
                   </div>
                 </div>
