@@ -24,7 +24,10 @@ interface WelfareGridProps {
 }
 
 export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems }) => {
-  const [welfareList, setWelfareList] = useState<WelfareItem[]>(initialItems);
+  const [welfareList, setWelfareList] = useState<WelfareItem[]>(() => {
+    const saved = localStorage.getItem('dharovar_welfare');
+    return saved ? JSON.parse(saved) : initialItems;
+  });
   const [selectedWelfare, setSelectedWelfare] = useState<WelfareItem | null>(null);
 
   // Admin URL & Mode state
@@ -33,6 +36,10 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [welfareToEdit, setWelfareToEdit] = useState<WelfareItem | null>(null);
   const [welfareToDelete, setWelfareToDelete] = useState<WelfareItem | null>(null);
+
+  React.useEffect(() => {
+    localStorage.setItem('dharovar_welfare', JSON.stringify(welfareList));
+  }, [welfareList]);
 
   // Form state
   const [formSchoolName, setFormSchoolName] = useState('');

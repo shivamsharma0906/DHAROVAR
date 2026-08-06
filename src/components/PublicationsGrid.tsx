@@ -30,7 +30,10 @@ interface PublicationsGridProps {
 type CategoryFilter = 'All' | PublicationCategory;
 
 export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initialItems }) => {
-  const [itemsList, setItemsList] = useState<PublicationItem[]>(initialItems);
+  const [itemsList, setItemsList] = useState<PublicationItem[]>(() => {
+    const saved = localStorage.getItem('dharovar_publications');
+    return saved ? JSON.parse(saved) : initialItems;
+  });
   const [activeCategory, setActiveCategory] = useState<CategoryFilter>('All');
   const [selectedPub, setSelectedPub] = useState<PublicationItem | null>(null);
 
@@ -40,6 +43,10 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pubToEdit, setPubToEdit] = useState<PublicationItem | null>(null);
   const [pubToDelete, setPubToDelete] = useState<PublicationItem | null>(null);
+
+  React.useEffect(() => {
+    localStorage.setItem('dharovar_publications', JSON.stringify(itemsList));
+  }, [itemsList]);
 
   // Form states for Add / Edit
   const [formTitle, setFormTitle] = useState('');
