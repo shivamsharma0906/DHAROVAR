@@ -38,6 +38,12 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const [welfareToEdit, setWelfareToEdit] = useState<WelfareItem | null>(null);
   const [welfareToDelete, setWelfareToDelete] = useState<WelfareItem | null>(null);
 
+  // Authentication states
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false);
+  const [loginId, setLoginId] = useState('');
+  const [loginPassword, setLoginPassword] = useState('');
+  const [loginError, setLoginError] = useState<string | null>(null);
+
   React.useEffect(() => {
     const fetchWelfare = async () => {
       try {
@@ -221,6 +227,39 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
     }
   };
 
+  const handleAdminControlsClick = () => {
+    const isAuth = sessionStorage.getItem('dharovar_admin_auth') === 'true';
+    if (isAuth) {
+      setIsAdminMode(!isAdminMode);
+    } else {
+      setIsLoginModalOpen(true);
+    }
+  };
+
+  const handleLoginSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const correctId = import.meta.env.VITE_ADMIN_ID || 'admin';
+    const correctPassword = import.meta.env.VITE_ADMIN_PASSWORD || 'dharovar2026';
+
+    if (loginId === correctId && loginPassword === correctPassword) {
+      sessionStorage.setItem('dharovar_admin_auth', 'true');
+      setIsLoginModalOpen(false);
+      setIsAdminMode(true);
+      setLoginError(null);
+      setLoginId('');
+      setLoginPassword('');
+      showToast('Admin authenticated successfully!');
+    } else {
+      setLoginError('Invalid Admin ID or Password!');
+    }
+  };
+
+  const handleLogout = () => {
+    sessionStorage.removeItem('dharovar_admin_auth');
+    setIsAdminMode(false);
+    showToast('Admin session logged out.');
+  };
+
   const showToast = (msg: string) => {
     setNotificationMsg(msg);
     setTimeout(() => setNotificationMsg(null), 3500);
@@ -236,18 +275,29 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
               Institutional Social Action
             </span>
             {hasAdminAccess && (
-              <button
-                onClick={() => setIsAdminMode(!isAdminMode)}
-                className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${
-                  isAdminMode
-                    ? 'bg-red-600 text-white border border-red-700'
-                    : 'bg-[#FAF8F5] text-[#9E7C3B] border border-[#C8A35F]/40 hover:border-[#C8A35F]'
-                }`}
-                title="Toggle Admin Access for Managing Welfare Initiatives"
-              >
-                {isAdminMode ? <Unlock size={12} /> : <Lock size={12} />}
-                <span>{isAdminMode ? 'Admin Mode ON' : 'Admin Controls'}</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={handleAdminControlsClick}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-[11px] font-bold transition-all shadow-sm ${
+                    isAdminMode
+                      ? 'bg-[#C8A35F] text-[#FAF8F5] border border-[#C8A35F]'
+                      : 'bg-[#FAF8F5] text-[#9E7C3B] border border-[#C8A35F]/40 hover:border-[#C8A35F]'
+                  }`}
+                  title="Toggle Admin Access for Managing Welfare Initiatives"
+                >
+                  {isAdminMode ? <Unlock size={12} /> : <Lock size={12} />}
+                  <span>{isAdminMode ? 'Admin Mode ON' : 'Admin Controls'}</span>
+                </button>
+                {sessionStorage.getItem('dharovar_admin_auth') === 'true' && (
+                  <button
+                    onClick={handleLogout}
+                    className="flex items-center justify-center p-1 rounded-full bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
+                    title="Log Out Admin Session"
+                  >
+                    <X size={10} />
+                  </button>
+                )}
+              </div>
             )}
           </div>
 
@@ -731,6 +781,71 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
               className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain"
             />
           </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Login Modal */}
+      <AnimatePresence>
+        {isLoginModalOpen && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-[#0F382C]/60 backdrop-blur-sm">
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-[#FAF8F5] rounded-2xl border-2 border-[#C8A35F] max-w-md w-full p-6 sm:p-8 text-[#0F382C] shadow-2xl relative"
+            >
+              <button
+                onClick={() => setIsLoginModalOpen(false)}
+                className="absolute top-4 right-4 p-2 text-[#0F382C]/60 hover:text-[#0F382C] rounded-full hover:bg-white transition-colors"
+              >
+                <X size={20} />
+              </button>
+
+              <div className="text-center mb-6">
+                <div className="w-12 h-12 rounded-full bg-[#C8A35F]/10 text-[#C8A35F] flex items-center justify-center mx-auto mb-3">
+                  <Lock size={22} />
+                </div>
+                <h3 className="font-serif text-xl font-bold text-[#0F382C]">Admin Access Required</h3>
+                <p className="text-xs text-[#1A535C] mt-1">Please enter your credentials to enable admin options.</p>
+              </div>
+
+              <form onSubmit={handleLoginSubmit} className="space-y-4 text-xs font-semibold">
+                {loginError && (
+                  <div className="p-3 bg-red-50 text-red-600 rounded-xl text-center font-bold">
+                    {loginError}
+                  </div>
+                )}
+                <div>
+                  <label className="block uppercase tracking-wider mb-1">Admin ID</label>
+                  <input
+                    type="text"
+                    required
+                    value={loginId}
+                    onChange={(e) => setLoginId(e.target.value)}
+                    placeholder="Enter Admin ID"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#E8E2D8] bg-white text-sm focus:outline-none focus:border-[#C8A35F]"
+                  />
+                </div>
+                <div>
+                  <label className="block uppercase tracking-wider mb-1">Password</label>
+                  <input
+                    type="password"
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                    placeholder="Enter Password"
+                    className="w-full px-4 py-2.5 rounded-xl border border-[#E8E2D8] bg-white text-sm focus:outline-none focus:border-[#C8A35F]"
+                  />
+                </div>
+                <button
+                  type="submit"
+                  className="w-full py-3 bg-[#0F382C] text-[#FAF8F5] font-bold rounded-full hover:bg-[#1A535C] transition-colors mt-2 text-sm"
+                >
+                  Verify Access
+                </button>
+              </form>
+            </motion.div>
+          </div>
         )}
       </AnimatePresence>
     </section>
