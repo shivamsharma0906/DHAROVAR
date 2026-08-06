@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WelfareItem } from '../data/welfare';
+import { supabase } from '../lib/supabase';
 import {
   Building2,
   Users,
@@ -36,6 +37,38 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [welfareToEdit, setWelfareToEdit] = useState<WelfareItem | null>(null);
   const [welfareToDelete, setWelfareToDelete] = useState<WelfareItem | null>(null);
+
+  React.useEffect(() => {
+    const fetchWelfare = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('welfare')
+          .select('*')
+          .order('id', { ascending: true });
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          setWelfareList(data);
+          localStorage.setItem('dharovar_welfare', JSON.stringify(data));
+        } else {
+          // Database is empty, let's insert seed data
+          const { error: insertError } = await supabase
+            .from('welfare')
+            .insert(initialItems);
+          if (insertError) {
+            console.error('Failed to seed welfare data:', insertError);
+          } else {
+            console.log('Seeded welfare data successfully!');
+          }
+          setWelfareList(initialItems);
+          localStorage.setItem('dharovar_welfare', JSON.stringify(initialItems));
+        }
+      } catch (err) {
+        console.error('Failed to fetch welfare from Supabase, falling back to local storage:', err);
+      }
+    };
+    fetchWelfare();
+  }, [initialItems]);
 
   React.useEffect(() => {
     localStorage.setItem('dharovar_welfare', JSON.stringify(welfareList));
@@ -118,46 +151,74 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
       .map((t) => t.trim())
       .filter((t) => t.length > 0);
 
-    if (welfareToEdit) {
-      const updated = welfareList.map((w) =>
-        w.id === welfareToEdit.id
-          ? {
-              ...w,
-              school_name: formSchoolName,
-              project_title: formProjectTitle,
-              impact_metrics: formImpactMetrics,
-              description: formDescription,
-              cover_image: formCoverImage,
-              partner_tags: tagsArray,
-              event_photos: formGallery,
-            }
-          : w
-      );
-      setWelfareList(updated);
-      showToast('Welfare initiative updated successfully!');
-    } else {
-      const newItem: WelfareItem = {
-        id: `welfare-${Date.now()}`,
-        school_name: formSchoolName,
-        project_title: formProjectTitle,
-        impact_metrics: formImpactMetrics || '500+ Students Impacted',
-        description: formDescription,
-        cover_image: formCoverImage,
-        partner_tags: tagsArray.length > 0 ? tagsArray : ['Youth Leadership', 'Social Welfare'],
-        event_photos: formGallery,
-      };
-      setWelfareList([newItem, ...welfareList]);
-      showToast('New Welfare initiative added successfully!');
-    }
+    const saveToSupabase = async () => {
+      try {
+        if (welfareToEdit) {
+          const updatedItem = {
+            school_name: formSchoolName,
+            project_title: formProjectTitle,
+            impact_metrics: formImpactMetrics,
+            description: formDescription,
+            cover_image: formCoverImage,
+            partner_tags: tagsArray,
+            event_photos: formGallery,
+          };
+          const { error } = await supabase
+            .from('welfare')
+            .update(updatedItem)
+            .eq('id', welfareToEdit.id);
+          if (error) throw error;
+
+          const updated = welfareList.map((w) =>
+            w.id === welfareToEdit.id ? { ...w, ...updatedItem } : w
+          );
+          setWelfareList(updated);
+          showToast('Welfare initiative updated successfully!');
+        } else {
+          const newItem: WelfareItem = {
+            id: `welfare-${Date.now()}`,
+            school_name: formSchoolName,
+            project_title: formProjectTitle,
+            impact_metrics: formImpactMetrics || '500+ Students Impacted',
+            description: formDescription,
+            cover_image: formCoverImage,
+            partner_tags: tagsArray.length > 0 ? tagsArray : ['Youth Leadership', 'Social Welfare'],
+            event_photos: formGallery,
+          };
+          const { error } = await supabase
+            .from('welfare')
+            .insert(newItem);
+          if (error) throw error;
+
+          setWelfareList([newItem, ...welfareList]);
+          showToast('New Welfare initiative added successfully!');
+        }
+      } catch (err) {
+        console.error('Failed to save to Supabase:', err);
+        showToast('Error: Failed to save changes.');
+      }
+    };
+    saveToSupabase();
 
     setIsAddModalOpen(false);
     setWelfareToEdit(null);
   };
 
-  const handleDelete = (id: string) => {
-    setWelfareList(welfareList.filter((item) => item.id !== id));
-    setWelfareToDelete(null);
-    showToast('Welfare initiative deleted successfully!');
+  const handleDelete = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('welfare')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+
+      setWelfareList(welfareList.filter((item) => item.id !== id));
+      setWelfareToDelete(null);
+      showToast('Welfare initiative deleted successfully!');
+    } catch (err) {
+      console.error('Failed to delete from Supabase:', err);
+      showToast('Error: Failed to delete initiative.');
+    }
   };
 
   const showToast = (msg: string) => {

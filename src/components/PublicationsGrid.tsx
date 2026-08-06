@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PublicationItem, PublicationCategory } from '../data/publications';
+import { supabase } from '../lib/supabase';
 import {
   BookOpen,
   Calendar,
@@ -43,6 +44,60 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pubToEdit, setPubToEdit] = useState<PublicationItem | null>(null);
   const [pubToDelete, setPubToDelete] = useState<PublicationItem | null>(null);
+
+  React.useEffect(() => {
+    const fetchPublications = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('publications')
+          .select('*')
+          .order('date', { ascending: false });
+        if (error) throw error;
+
+        if (data && data.length > 0) {
+          const mapped = data.map((p) => ({
+            id: p.id,
+            title: p.title,
+            date: p.date,
+            category: p.category,
+            cover_image: p.cover_image,
+            video_file: p.video_file,
+            excerpt: p.excerpt,
+            author: p.author,
+            bodyHtml: p.body_html || p.bodyHtml || '',
+          }));
+          setItemsList(mapped);
+          localStorage.setItem('dharovar_publications', JSON.stringify(mapped));
+        } else {
+          // Database is empty, let's insert seed data
+          const dbItems = initialItems.map((p) => ({
+            id: p.id,
+            title: p.title,
+            date: p.date,
+            category: p.category,
+            cover_image: p.cover_image,
+            video_file: p.video_file,
+            excerpt: p.excerpt,
+            author: p.author,
+            body_html: p.bodyHtml,
+          }));
+          const { error: insertError } = await supabase
+            .from('publications')
+            .insert(dbItems);
+          if (insertError) {
+            console.error('Failed to seed publications:', insertError);
+          } else {
+            console.log('Seeded publications successfully!');
+          }
+          setItemsList(initialItems);
+          localStorage.setItem('dharovar_publications', JSON.stringify(initialItems));
+        }
+      } catch (err) {
+        console.error('Failed to fetch publications from Supabase, falling back to local storage:', err);
+      }
+    };
+    fetchPublications();
+  }, [initialItems]);
 
   React.useEffect(() => {
     localStorage.setItem('dharovar_publications', JSON.stringify(itemsList));
@@ -135,51 +190,102 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
     e.preventDefault();
     if (!formTitle.trim() || !formExcerpt.trim()) return;
 
-    if (pubToEdit) {
-      // Edit existing publication
-      const updatedList = itemsList.map((p) =>
-        p.id === pubToEdit.id
-          ? {
-              ...p,
-              title: formTitle,
-              category: formCategory,
-              excerpt: formExcerpt,
-              bodyHtml: formBodyHtml.trim() ? formBodyHtml : `<p>${formExcerpt}</p>`,
-              author: formAuthor,
-              cover_image: formCoverImage,
-              video_file: formVideoFile,
-            }
-          : p
-      );
-      setItemsList(updatedList);
-      showToast('Publication updated successfully!');
-    } else {
-      // Create new publication
-      const newPub: PublicationItem = {
-        id: `pub-${Date.now()}`,
-        title: formTitle,
-        date: new Date().toISOString(),
-        category: formCategory,
-        cover_image: formCoverImage,
-        video_file: formVideoFile,
-        excerpt: formExcerpt,
-        author: formAuthor,
-        bodyHtml: formBodyHtml.trim()
-          ? `<h3>${formTitle}</h3><p>${formBodyHtml}</p>`
-          : `<h3>${formTitle}</h3><p>${formExcerpt}</p>`,
-      };
-      setItemsList([newPub, ...itemsList]);
-      showToast('New Publication added to archives!');
-    }
+    const saveToSupabase = async () => {
+      try {
+        if (pubToEdit) {
+          const updatedItem = {
+            title: formTitle,
+            category: formCategory,
+            excerpt: formExcerpt,
+            body_html: formBodyHtml.trim() ? formBodyHtml : `<p>${formExcerpt}</p>`,
+            author: formAuthor,
+            cover_image: formCoverImage,
+            video_file: formVideoFile,
+          };
+          const { error } = await supabase
+            .from('publications')
+            .update(updatedItem)
+            .eq('id', pubToEdit.id);
+          if (error) throw error;
+
+          const updatedList = itemsList.map((p) =>
+            p.id === pubToEdit.id
+              ? {
+                  ...p,
+                  title: formTitle,
+                  category: formCategory,
+                  excerpt: formExcerpt,
+                  bodyHtml: updatedItem.body_html,
+                  author: formAuthor,
+                  cover_image: formCoverImage,
+                  video_file: formVideoFile,
+                }
+              : p
+          );
+          setItemsList(updatedList);
+          showToast('Publication updated successfully!');
+        } else {
+          // Create new publication
+          const newPub: PublicationItem = {
+            id: `pub-${Date.now()}`,
+            title: formTitle,
+            date: new Date().toISOString(),
+            category: formCategory,
+            cover_image: formCoverImage,
+            video_file: formVideoFile,
+            excerpt: formExcerpt,
+            author: formAuthor,
+            bodyHtml: formBodyHtml.trim()
+              ? `<h3>${formTitle}</h3><p>${formBodyHtml}</p>`
+              : `<h3>${formTitle}</h3><p>${formExcerpt}</p>`,
+          };
+
+          const dbItem = {
+            id: newPub.id,
+            title: newPub.title,
+            date: newPub.date,
+            category: newPub.category,
+            cover_image: newPub.cover_image,
+            video_file: newPub.video_file,
+            excerpt: newPub.excerpt,
+            author: newPub.author,
+            body_html: newPub.bodyHtml,
+          };
+
+          const { error } = await supabase
+            .from('publications')
+            .insert(dbItem);
+          if (error) throw error;
+
+          setItemsList([newPub, ...itemsList]);
+          showToast('New Publication added to archives!');
+        }
+      } catch (err) {
+        console.error('Failed to save publication to Supabase:', err);
+        showToast('Error: Failed to save changes.');
+      }
+    };
+    saveToSupabase();
 
     setIsAddModalOpen(false);
     setPubToEdit(null);
   };
 
-  const handleDeletePublication = (id: string) => {
-    setItemsList(itemsList.filter((item) => item.id !== id));
-    setPubToDelete(null);
-    showToast('Publication deleted successfully!');
+  const handleDeletePublication = async (id: string) => {
+    try {
+      const { error } = await supabase
+        .from('publications')
+        .delete()
+        .eq('id', id);
+      if (error) throw error;
+
+      setItemsList(itemsList.filter((item) => item.id !== id));
+      setPubToDelete(null);
+      showToast('Publication deleted successfully!');
+    } catch (err) {
+      console.error('Failed to delete publication from Supabase:', err);
+      showToast('Error: Failed to delete publication.');
+    }
   };
 
   const showToast = (msg: string) => {

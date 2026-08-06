@@ -28,3 +28,4 @@ dist-ssr
 .system_generated/
 scratch/
 brain/
+.env
