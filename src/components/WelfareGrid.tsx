@@ -28,28 +28,11 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const [selectedWelfare, setSelectedWelfare] = useState<WelfareItem | null>(null);
 
   // Admin URL & Mode state
-  const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [hasAdminAccess] = useState(true);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [welfareToEdit, setWelfareToEdit] = useState<WelfareItem | null>(null);
   const [welfareToDelete, setWelfareToDelete] = useState<WelfareItem | null>(null);
-
-  React.useEffect(() => {
-    const checkUrl = () => {
-      const isAdminUrl =
-        window.location.search.toLowerCase().includes('admin') ||
-        window.location.hash.toLowerCase().includes('admin') ||
-        window.location.pathname.toLowerCase().includes('admin');
-      setHasAdminAccess(isAdminUrl);
-    };
-    checkUrl();
-    window.addEventListener('popstate', checkUrl);
-    window.addEventListener('hashchange', checkUrl);
-    return () => {
-      window.removeEventListener('popstate', checkUrl);
-      window.removeEventListener('hashchange', checkUrl);
-    };
-  }, []);
 
   // Form state
   const [formSchoolName, setFormSchoolName] = useState('');

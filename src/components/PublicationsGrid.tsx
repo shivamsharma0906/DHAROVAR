@@ -35,28 +35,11 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
   const [selectedPub, setSelectedPub] = useState<PublicationItem | null>(null);
 
   // Admin URL & Mode state
-  const [hasAdminAccess, setHasAdminAccess] = useState(false);
+  const [hasAdminAccess] = useState(true);
   const [isAdminMode, setIsAdminMode] = useState(false);
   const [isAddModalOpen, setIsAddModalOpen] = useState(false);
   const [pubToEdit, setPubToEdit] = useState<PublicationItem | null>(null);
   const [pubToDelete, setPubToDelete] = useState<PublicationItem | null>(null);
-
-  React.useEffect(() => {
-    const checkUrl = () => {
-      const isAdminUrl =
-        window.location.search.toLowerCase().includes('admin') ||
-        window.location.hash.toLowerCase().includes('admin') ||
-        window.location.pathname.toLowerCase().includes('admin');
-      setHasAdminAccess(isAdminUrl);
-    };
-    checkUrl();
-    window.addEventListener('popstate', checkUrl);
-    window.addEventListener('hashchange', checkUrl);
-    return () => {
-      window.removeEventListener('popstate', checkUrl);
-      window.removeEventListener('hashchange', checkUrl);
-    };
-  }, []);
 
   // Form states for Add / Edit
   const [formTitle, setFormTitle] = useState('');
