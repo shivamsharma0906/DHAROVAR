@@ -51,6 +51,7 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
   const [formGallery, setFormGallery] = useState<string[]>([]);
 
   const [notificationMsg, setNotificationMsg] = useState<string | null>(null);
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
 
   const handleCoverUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -359,7 +360,11 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
 
               {/* Hero Image */}
               {selectedWelfare.cover_image && (
-                <div className="mb-6 rounded-xl overflow-hidden border border-[#E8E2D8] bg-[#FAF8F5] flex justify-center">
+                <div
+                  className="mb-6 rounded-xl overflow-hidden border border-[#E8E2D8] bg-[#FAF8F5] flex justify-center cursor-zoom-in hover:opacity-95 transition-opacity"
+                  onClick={() => selectedWelfare.cover_image && setLightboxImage(selectedWelfare.cover_image)}
+                  title="Click to view full image"
+                >
                   <img src={selectedWelfare.cover_image} alt={selectedWelfare.project_title} className="w-full h-auto max-h-[450px] object-contain block" />
                 </div>
               )}
@@ -392,7 +397,12 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
                   </h4>
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
                     {selectedWelfare.event_photos.map((photoUrl, pIdx) => (
-                      <div key={pIdx} className="rounded-xl overflow-hidden border border-[#E8E2D8] h-32 bg-[#FAF8F5]">
+                      <div
+                        key={pIdx}
+                        className="rounded-xl overflow-hidden border border-[#E8E2D8] h-32 bg-[#FAF8F5] cursor-zoom-in hover:opacity-90 transition-opacity"
+                        onClick={() => setLightboxImage(photoUrl)}
+                        title="Click to view full image"
+                      >
                         <img src={photoUrl} alt={`Seminar Photo ${pIdx + 1}`} className="w-full h-full object-contain" />
                       </div>
                     ))}
@@ -617,6 +627,36 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({ items: initialItems })
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md cursor-zoom-out"
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-6 right-6 p-3 text-white/70 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200"
+              aria-label="Close image viewer"
+            >
+              <X size={24} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={lightboxImage}
+              alt="Fullscreen Preview"
+              className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </section>

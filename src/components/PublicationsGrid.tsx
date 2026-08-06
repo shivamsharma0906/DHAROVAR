@@ -48,6 +48,8 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
     localStorage.setItem('dharovar_publications', JSON.stringify(itemsList));
   }, [itemsList]);
 
+  const [lightboxImage, setLightboxImage] = useState<string | null>(null);
+
   // Form states for Add / Edit
   const [formTitle, setFormTitle] = useState('');
   const [formCategory, setFormCategory] = useState<PublicationCategory>('Domestic Policy & Governance');
@@ -435,7 +437,11 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
 
               {/* Cover Image if no video player */}
               {!selectedPub.video_file && selectedPub.cover_image && (
-                <div className="mb-8 rounded-xl overflow-hidden border border-[#E8E2D8] bg-[#FAF8F5] flex justify-center">
+                <div
+                  className="mb-8 rounded-xl overflow-hidden border border-[#E8E2D8] bg-[#FAF8F5] flex justify-center cursor-zoom-in hover:opacity-95 transition-opacity"
+                  onClick={() => selectedPub.cover_image && setLightboxImage(selectedPub.cover_image)}
+                  title="Click to view full image"
+                >
                   <img src={selectedPub.cover_image} alt={selectedPub.title} className="w-full h-auto max-h-[450px] object-contain block" />
                 </div>
               )}
@@ -656,6 +662,36 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({ items: initi
               </div>
             </motion.div>
           </div>
+        )}
+      </AnimatePresence>
+
+      {/* Fullscreen Lightbox Modal */}
+      <AnimatePresence>
+        {lightboxImage && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            onClick={() => setLightboxImage(null)}
+            className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/95 backdrop-blur-md cursor-zoom-out"
+          >
+            <button
+              onClick={() => setLightboxImage(null)}
+              className="absolute top-6 right-6 p-3 text-white/70 hover:text-white rounded-full bg-white/10 hover:bg-white/20 transition-all duration-200"
+              aria-label="Close image viewer"
+            >
+              <X size={24} />
+            </button>
+            <motion.img
+              initial={{ scale: 0.9, opacity: 0 }}
+              animate={{ scale: 1, opacity: 1 }}
+              exit={{ scale: 0.9, opacity: 0 }}
+              transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+              src={lightboxImage}
+              alt="Fullscreen Preview"
+              className="max-w-[95vw] max-h-[95vh] rounded-lg shadow-2xl object-contain"
+            />
+          </motion.div>
         )}
       </AnimatePresence>
     </section>
