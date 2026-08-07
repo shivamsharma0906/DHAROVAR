@@ -14,6 +14,7 @@ export const SocialsContact: React.FC = () => {
 
   const [errors, setErrors] = useState<{ [key: string]: string }>({});
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const socialLinks = [
     { name: 'Instagram', icon: Instagram, href: 'https://www.instagram.com/dharovar_house/' },
@@ -32,14 +33,48 @@ export const SocialsContact: React.FC = () => {
     return newErrors;
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const validationErrors = validate();
     if (Object.keys(validationErrors).length > 0) {
       setErrors(validationErrors);
-    } else {
-      setErrors({});
-      setSubmitted(true);
+      return;
+    }
+
+    setErrors({});
+    setIsSubmitting(true);
+
+    const accessKey = import.meta.env.VITE_WEB3FORMS_ACCESS_KEY || '';
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json'
+        },
+        body: JSON.stringify({
+          access_key: accessKey,
+          name: formData.name,
+          email: formData.email,
+          subject: `New Institutional Inquiry from ${formData.name}`,
+          organization: formData.organization,
+          message: formData.message,
+          from_name: 'Dharovar House Website'
+        })
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSubmitted(true);
+      } else {
+        setErrors({ submit: result.message || 'Something went wrong. Please try again.' });
+      }
+    } catch (err) {
+      console.error('Inquiry submission error:', err);
+      setErrors({ submit: 'Failed to connect to the mail server. Please try again later.' });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -224,12 +259,20 @@ export const SocialsContact: React.FC = () => {
                   </div>
 
                   {/* Submit Button */}
+                  {errors.submit && (
+                    <p className="text-sm text-red-500 text-center font-semibold bg-red-50 p-3 rounded-xl border border-red-200">
+                      {errors.submit}
+                    </p>
+                  )}
                   <button
                     type="submit"
-                    className="w-full py-4 bg-[#0F382C] text-[#FAF8F5] text-sm font-semibold rounded-full shadow-md hover:bg-[#1A535C] transition-all flex items-center justify-center gap-2 group"
+                    disabled={isSubmitting}
+                    className={`w-full py-4 bg-[#0F382C] text-[#FAF8F5] text-sm font-semibold rounded-full shadow-md hover:bg-[#1A535C] transition-all flex items-center justify-center gap-2 group ${
+                      isSubmitting ? 'opacity-70 cursor-not-allowed' : ''
+                    }`}
                   >
-                    <span>Submit Formal Inquiry</span>
-                    <Send size={16} className="group-hover:translate-x-1 transition-transform text-[#C8A35F]" />
+                    <span>{isSubmitting ? 'Submitting Inquiry...' : 'Submit Formal Inquiry'}</span>
+                    {!isSubmitting && <Send size={16} className="group-hover:translate-x-1 transition-transform text-[#C8A35F]" />}
                   </button>
                 </form>
               )}
