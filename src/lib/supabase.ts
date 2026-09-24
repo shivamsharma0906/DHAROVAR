@@ -42,6 +42,10 @@ export interface SupabaseErrorLike {
 }
 
 export function formatSupabaseError(err: unknown): string {
+  if (!isSupabaseConfigured) {
+    return 'Supabase is not configured on this deployment! Please add VITE_SUPABASE_URL and VITE_SUPABASE_ANON_KEY to your Vercel Project Settings > Environment Variables, then trigger a Redeploy.';
+  }
+
   if (!err) return 'Unknown error occurred';
 
   if (typeof err === 'object' && err !== null) {
@@ -49,6 +53,9 @@ export function formatSupabaseError(err: unknown): string {
     const parts: string[] = [];
 
     if (errorObj.message) {
+      if (errorObj.message.includes('Failed to fetch')) {
+        return `Network Error: Failed to reach Supabase at "${supabaseUrl}". Please verify VITE_SUPABASE_URL in your Vercel Environment Variables.`;
+      }
       parts.push(errorObj.message);
     }
     if (errorObj.details) {
@@ -67,6 +74,9 @@ export function formatSupabaseError(err: unknown): string {
   }
 
   if (err instanceof Error) {
+    if (err.message.includes('Failed to fetch')) {
+      return `Network Error: Failed to reach Supabase at "${supabaseUrl}". Please verify VITE_SUPABASE_URL in your Vercel Environment Variables.`;
+    }
     return err.message;
   }
 
