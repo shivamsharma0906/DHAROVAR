@@ -29,3 +29,8 @@ dist-ssr
 scratch/
 brain/
 .env
+.env.local
+.env.*.local
+powershell.cmd
+
+

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PublicationItem, PublicationCategory } from '../data/publications';
-import { supabase } from '../lib/supabase';
+import { supabase, formatSupabaseError } from '../lib/supabase';
 import {
   BookOpen,
   Calendar,
@@ -92,7 +92,7 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({
             .from('publications')
             .insert(dbItems);
           if (insertError) {
-            console.error('Failed to seed publications:', insertError);
+            console.error('Failed to seed publications:', formatSupabaseError(insertError), insertError);
           } else {
             console.log('Seeded publications successfully!');
           }
@@ -100,7 +100,8 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({
           localStorage.setItem('dharovar_publications', JSON.stringify(initialItems));
         }
       } catch (err) {
-        console.error('Failed to fetch publications from Supabase, falling back to local storage:', err);
+        console.error('Failed to fetch publications from Supabase:', formatSupabaseError(err), err);
+        console.warn('Falling back to local storage due to Supabase error.');
       }
     };
     fetchPublications();
@@ -268,8 +269,9 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({
           showToast('New Publication added to archives!');
         }
       } catch (err) {
-        console.error('Failed to save publication to Supabase:', err);
-        showToast('Error: Failed to save changes.');
+        const errorDetails = formatSupabaseError(err);
+        console.error('Failed to save publication to Supabase:', errorDetails, err);
+        showToast(`Error: ${errorDetails}`);
       }
     };
     saveToSupabase();
@@ -290,14 +292,15 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({
       setPubToDelete(null);
       showToast('Publication deleted successfully!');
     } catch (err) {
-      console.error('Failed to delete publication from Supabase:', err);
-      showToast('Error: Failed to delete publication.');
+      const errorDetails = formatSupabaseError(err);
+      console.error('Failed to delete publication from Supabase:', errorDetails, err);
+      showToast(`Error: ${errorDetails}`);
     }
   };
 
   const showToast = (msg: string) => {
     setNotificationMsg(msg);
-    setTimeout(() => setNotificationMsg(null), 3500);
+    setTimeout(() => setNotificationMsg(null), 5000);
   };
 
   return (
@@ -401,10 +404,18 @@ export const PublicationsGrid: React.FC<PublicationsGridProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-4 rounded-xl bg-[#0F382C] text-[#C8A35F] border border-[#C8A35F] text-xs font-bold text-center flex items-center justify-center gap-2 shadow-lg"
+            className={`mb-8 p-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 shadow-lg max-w-3xl mx-auto border ${
+              notificationMsg.startsWith('Error:')
+                ? 'bg-red-950/90 text-red-200 border-red-500'
+                : 'bg-[#0F382C] text-[#C8A35F] border-[#C8A35F]'
+            }`}
           >
-            <CheckCircle size={18} />
-            <span>{notificationMsg}</span>
+            {notificationMsg.startsWith('Error:') ? (
+              <ShieldAlert size={18} className="text-red-400 shrink-0" />
+            ) : (
+              <CheckCircle size={18} className="text-[#C8A35F] shrink-0" />
+            )}
+            <span className="break-words text-left sm:text-center">{notificationMsg}</span>
           </motion.div>
         )}
 

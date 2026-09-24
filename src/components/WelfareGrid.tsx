@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { WelfareItem } from '../data/welfare';
-import { supabase } from '../lib/supabase';
+import { supabase, formatSupabaseError } from '../lib/supabase';
+
 import {
   Building2,
   Users,
@@ -63,7 +64,7 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({
             .from('welfare')
             .insert(initialItems);
           if (insertError) {
-            console.error('Failed to seed welfare data:', insertError);
+            console.error('Failed to seed welfare data:', formatSupabaseError(insertError), insertError);
           } else {
             console.log('Seeded welfare data successfully!');
           }
@@ -71,7 +72,8 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({
           localStorage.setItem('dharovar_welfare', JSON.stringify(initialItems));
         }
       } catch (err) {
-        console.error('Failed to fetch welfare from Supabase, falling back to local storage:', err);
+        console.error('Failed to fetch welfare from Supabase:', formatSupabaseError(err), err);
+        console.warn('Falling back to local storage due to Supabase error.');
       }
     };
     fetchWelfare();
@@ -201,8 +203,9 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({
           showToast('New Welfare initiative added successfully!');
         }
       } catch (err) {
-        console.error('Failed to save to Supabase:', err);
-        showToast('Error: Failed to save changes.');
+        const errorDetails = formatSupabaseError(err);
+        console.error('Failed to save to Supabase:', errorDetails, err);
+        showToast(`Error: ${errorDetails}`);
       }
     };
     saveToSupabase();
@@ -223,14 +226,15 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({
       setWelfareToDelete(null);
       showToast('Welfare initiative deleted successfully!');
     } catch (err) {
-      console.error('Failed to delete from Supabase:', err);
-      showToast('Error: Failed to delete initiative.');
+      const errorDetails = formatSupabaseError(err);
+      console.error('Failed to delete from Supabase:', errorDetails, err);
+      showToast(`Error: ${errorDetails}`);
     }
   };
 
   const showToast = (msg: string) => {
     setNotificationMsg(msg);
-    setTimeout(() => setNotificationMsg(null), 3500);
+    setTimeout(() => setNotificationMsg(null), 5000);
   };
 
   return (
@@ -308,10 +312,18 @@ export const WelfareGrid: React.FC<WelfareGridProps> = ({
           <motion.div
             initial={{ opacity: 0, y: -10 }}
             animate={{ opacity: 1, y: 0 }}
-            className="mb-8 p-4 rounded-xl bg-[#0F382C] text-[#C8A35F] border border-[#C8A35F] text-xs font-bold text-center flex items-center justify-center gap-2 shadow-lg"
+            className={`mb-8 p-4 rounded-xl text-xs font-bold text-center flex items-center justify-center gap-2 shadow-lg max-w-3xl mx-auto border ${
+              notificationMsg.startsWith('Error:')
+                ? 'bg-red-950/90 text-red-200 border-red-500'
+                : 'bg-[#0F382C] text-[#C8A35F] border-[#C8A35F]'
+            }`}
           >
-            <CheckCircle size={18} />
-            <span>{notificationMsg}</span>
+            {notificationMsg.startsWith('Error:') ? (
+              <ShieldAlert size={18} className="text-red-400 shrink-0" />
+            ) : (
+              <CheckCircle size={18} className="text-[#C8A35F] shrink-0" />
+            )}
+            <span className="break-words text-left sm:text-center">{notificationMsg}</span>
           </motion.div>
         )}
 
