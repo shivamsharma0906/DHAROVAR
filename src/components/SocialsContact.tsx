@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { motion } from 'framer-motion';
-import { Instagram, Send, CheckCircle, Mail, MapPin, Building2, User } from 'lucide-react';
+import { Instagram, Send, CheckCircle, Mail, Building2, User } from 'lucide-react';
 
 export const SocialsContact: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -125,26 +125,20 @@ export const SocialsContact: React.FC = () => {
                 })}
               </div>
 
-              {/* Headquarters Details */}
-              <div className="space-y-4 pt-6 border-t border-[#E8E2D8] text-xs text-[#1A535C]">
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#C8A35F]/30 flex items-center justify-center text-[#C8A35F]">
-                    <MapPin size={16} />
-                  </div>
-                  <div>
-                    <span className="font-bold text-[#0F382C]">Secretariat Headquarters</span>
-                    <p className="text-[#1A535C]/70">Mumbai, Maharashtra, India</p>
-                  </div>
-                </div>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-white border border-[#C8A35F]/30 flex items-center justify-center text-[#C8A35F]">
+              {/* Institutional Email */}
+              <div className="pt-6 border-t border-[#E8E2D8] text-xs text-[#1A535C]">
+                <a
+                  href="mailto:dharovarhouse@gmail.com"
+                  className="flex items-center gap-3 group/mail hover:opacity-90 transition-opacity"
+                >
+                  <div className="w-8 h-8 rounded-full bg-white border border-[#C8A35F]/30 flex items-center justify-center text-[#C8A35F] group-hover/mail:bg-[#C8A35F] group-hover/mail:text-white transition-colors">
                     <Mail size={16} />
                   </div>
                   <div>
                     <span className="font-bold text-[#0F382C]">Direct Institutional Email</span>
-                    <p className="text-[#1A535C]/70">secretariat@dharovarhouse.org</p>
+                    <p className="text-[#1A535C]/70 group-hover/mail:text-[#C8A35F] transition-colors">dharovarhouse@gmail.com</p>
                   </div>
-                </div>
+                </a>
               </div>
             </div>
           </div>

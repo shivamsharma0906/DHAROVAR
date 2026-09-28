@@ -27,21 +27,15 @@ export const About: React.FC = () => {
   const metrics = [
     {
       value: '10+',
-      label: 'International Schools Connected',
+      label: 'Schools Reached',
       sublabel: 'Collaborative Mumbai Network',
       icon: Landmark,
     },
     {
       value: '5,000+',
-      label: 'Student Lives Impacted',
+      label: 'Students Impacted',
       sublabel: 'Direct Welfare Beneficiaries',
       icon: Shield,
-    },
-    {
-      value: '15+',
-      label: 'Community Welfare Drives',
-      sublabel: 'Executed Across Maharashtra',
-      icon: Flame,
     },
   ];
 
@@ -195,7 +189,7 @@ export const About: React.FC = () => {
         </div>
 
         {/* Metrics Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-8 pt-6 max-w-3xl mx-auto">
           {metrics.map((metric, idx) => {
             const Icon = metric.icon;
             return (

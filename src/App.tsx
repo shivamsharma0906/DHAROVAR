@@ -63,12 +63,7 @@ export function App() {
       <Navbar />
       <Hero />
       <About />
-      <WelfareGrid 
-        items={welfareInitiatives} 
-        isAdminMode={isAdminMode} 
-        onAdminControlsToggle={handleAdminControlsClick}
-        onLogout={handleLogout}
-      />
+      <WelfareGrid items={welfareInitiatives} />
       <PublicationsGrid 
         items={publications} 
         isAdminMode={isAdminMode} 
